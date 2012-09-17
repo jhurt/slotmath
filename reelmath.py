@@ -1,19 +1,20 @@
 import math
 
 #get the symbols and weights on each reel
-symbols = []
 symbols_weights = {}
-symbols_weights_file = open('symbols_weights.csv', 'r')
+symbols_weights_file = open('reels_layout.csv', 'r')
 line = symbols_weights_file.readline()
 while line:
     tokens = line.split(',')
     if len(tokens) != 6 or len(tokens[0]) < 1:
         break
-    symbols.append(tokens[0])
     symbol_weights = []
     for weight in tokens[1:]:
         symbol_weights.append(float(weight))
-    symbols_weights[tokens[0]] = symbol_weights
+    if tokens[0] in symbols_weights.keys():
+        symbols_weights[tokens[0]] = map(lambda x,y: x+y, symbols_weights[tokens[0]], symbol_weights)
+    else:
+        symbols_weights[tokens[0]] = symbol_weights
     line = symbols_weights_file.readline()
 symbols_weights_file.close()
 
@@ -28,12 +29,6 @@ while line:
     line = payouts_file.readline()
 payouts_file.close()
 
-def add(x,y):
-    return x + y
-
-def multiply(x,y):
-    return x * y
-
 def valueOfPermutation(permutation, weights, reel_weights):
     value = 1
     for i in range(len(permutation)):
@@ -44,7 +39,7 @@ def valueOfPermutation(permutation, weights, reel_weights):
     return value
 
 def expectedValueOfPermutation(permutation, weights, reel_weights, value):
-    probability = valueOfPermutation(permutation, weights, reel_weights) / reduce(multiply, reel_weights)
+    probability = valueOfPermutation(permutation, weights, reel_weights) / reduce(lambda x,y:x*y, reel_weights)
     return probability * value
 
 def binomialCoefficient(n,k):
@@ -52,16 +47,16 @@ def binomialCoefficient(n,k):
 
 #calculate the total symbol weight for each reel
 reel_weights = [0,0,0,0,0]
-for symbol in symbols:
+for symbol in symbols_weights.keys():
     symbol_weights = symbols_weights[symbol]
-    reel_weights = map(add, reel_weights, symbol_weights)
+    reel_weights = map(lambda x,y:x+y, reel_weights, symbol_weights)
 
 #find the expected value
 expected_value = 0.0
 for payout in payouts:
     frequency = payout['frequency']
     if frequency == 5:
-        probability = reduce(multiply, symbols_weights[payout['symbol']]) / reduce(multiply, reel_weights)
+        probability = reduce(lambda x,y:x*y, symbols_weights[payout['symbol']]) / reduce(lambda x,y:x*y, reel_weights)
         expected_value += probability * payout['value']
     elif frequency == 4:
         expected_value += expectedValueOfPermutation([0,1,1,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])

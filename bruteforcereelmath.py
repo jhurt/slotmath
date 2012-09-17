@@ -1,6 +1,6 @@
 #get the symbols and weights on each reel
 symbols_weights = []
-slot_layout_file = open('layout.csv', 'r')
+slot_layout_file = open('reels_layout.csv', 'r')
 line = slot_layout_file.readline()
 while line:
     tokens = line.split(',')
@@ -26,19 +26,6 @@ while line:
     line = payouts_file.readline()
 payouts_file.close()
 
-def valueOfPermutation(permutation, weights, reel_weights):
-    value = 1
-    for i in range(len(permutation)):
-        if permutation[i] == 0:
-            value = value * (reel_weights[i] - weights[i])
-        elif permutation[i] == 1:
-            value = value * weights[i]
-    return value
-
-def expectedValueOfPermutation(permutation, weights, reel_weights, value):
-    probability = valueOfPermutation([0,1,1,1,1], weights, reel_weights) / reduce(lambda x,y: x*y, reel_weights)
-    return probability * value
-
 #calculate the total symbol weight for each reel
 reel_weights = [0,0,0,0,0]
 
@@ -46,9 +33,9 @@ symbols_per_reel = [len(symbols_weights), len(symbols_weights), len(symbols_weig
 for symbol_weights in symbols_weights:
     reel_weights = map(lambda x,y:x+y, reel_weights, map(lambda x: x['weight'], symbol_weights))
 
-def makeSymbolToCount(reel):
+def makeSymbolToCount(line):
     symbol_to_count = {}
-    for symbol_weights in reel:
+    for symbol_weights in line:
         if symbol_weights['symbol'] in symbol_to_count.keys():
             symbol_to_count[symbol_weights['symbol']] += 1
         else:
@@ -63,20 +50,18 @@ for a in range(symbols_per_reel[0]):
         for c in range(symbols_per_reel[2]):
             for d in range(symbols_per_reel[3]):
                 for e in range(symbols_per_reel[4]):
-                    reel = []
-                    reel.append(symbols_weights[a][0])
-                    reel.append(symbols_weights[b][1])
-                    reel.append(symbols_weights[c][2])
-                    reel.append(symbols_weights[d][3])
-                    reel.append(symbols_weights[e][4])
-                    #print("reel : {0}{1}{2}{3}{4}", reel[0]['symbol'],reel[1]['symbol'],reel[2]['symbol'],reel[3]['symbol'],reel[4]['symbol'])
-                    symbol_to_count = makeSymbolToCount(reel)
+                    line = []
+                    line.append(symbols_weights[a][0])
+                    line.append(symbols_weights[b][1])
+                    line.append(symbols_weights[c][2])
+                    line.append(symbols_weights[d][3])
+                    line.append(symbols_weights[e][4])
+                    symbol_to_count = makeSymbolToCount(line)
                     for symbol in symbol_to_payouts.keys():
                         if symbol in symbol_to_count.keys():
                             for payout in symbol_to_payouts[symbol]:
                                 if payout['frequency'] == symbol_to_count[symbol]:
-                                    probability = reduce(lambda x,y: x*y, map(lambda x: x['weight'], reel)) / total_choices
+                                    probability = reduce(lambda x,y: x*y, map(lambda x: x['weight'], line)) / total_choices
                                     expected_value += payout['value'] * probability
 
-
-print "final expected value: {0}".format(expected_value)
+print "expected value: {0}".format(expected_value)
