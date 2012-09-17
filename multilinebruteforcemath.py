@@ -55,7 +55,6 @@ def makeSymbolToCount(reel):
             symbol_to_count[symbol_weights['symbol']] = 1
     return symbol_to_count
 
-
 possible_lines = []
 possible_lines.append([0,0,0,0,0])
 possible_lines.append([-1,-1,-1,-1,-1])
@@ -103,4 +102,3 @@ for a in range(symbols_per_reel[0]):
                                         expected_value += payout['value'] * probability
 
 print "expected value: {0}".format(expected_value/len(possible_lines))
-

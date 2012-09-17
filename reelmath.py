@@ -1,6 +1,6 @@
-import math
-
 #get the symbols and weights on each reel
+import itertools
+
 symbols_weights = {}
 symbols_weights_file = open('reels_layout.csv', 'r')
 line = symbols_weights_file.readline()
@@ -52,25 +52,18 @@ for symbol in symbols_weights.keys():
 expected_value = 0.0
 for payout in payouts:
     frequency = payout['frequency']
+    permutations = None
     if frequency == 5:
-        probability = reduce(lambda x,y:x*y, symbols_weights[payout['symbol']]) / reduce(lambda x,y:x*y, reel_weights)
-        expected_value += probability * payout['value']
+        permutations = [[1,1,1,1,1]]
     elif frequency == 4:
-        expected_value += expectedValueOfPermutation([0,1,1,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,0,1,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,0,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,1,0,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,1,1,0], symbols_weights[payout['symbol']], reel_weights, payout['value'])
+        permutations = set(itertools.permutations([1,1,1,1,0]))
     elif frequency == 3:
-        expected_value += expectedValueOfPermutation([0,0,1,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,0,0,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,0,0,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,1,0,0], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([0,1,1,1,0], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,0,1,1,0], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([0,1,0,1,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,0,1,0,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([1,1,0,1,0], symbols_weights[payout['symbol']], reel_weights, payout['value'])
-        expected_value += expectedValueOfPermutation([0,1,1,0,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
+        permutations = set(itertools.permutations([1,1,1,0,0]))
+    elif frequency == 2:
+        permutations = set(itertools.permutations([1,1,0,0,0]))
+    elif frequency == 1:
+        permutations = set(itertools.permutations([1,0,0,0,0]))
+    for permutation in permutations:
+        expected_value += expectedValueOfPermutation(permutation, symbols_weights[payout['symbol']], reel_weights, payout['value'])
 
 print "expected value: {0}".format(expected_value)
