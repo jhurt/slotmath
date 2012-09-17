@@ -42,9 +42,6 @@ def expectedValueOfPermutation(permutation, weights, reel_weights, value):
     probability = valueOfPermutation(permutation, weights, reel_weights) / reduce(lambda x,y:x*y, reel_weights)
     return probability * value
 
-def binomialCoefficient(n,k):
-    return math.factorial(n) / (math.factorial(k) * math.factorial(n-k))
-
 #calculate the total symbol weight for each reel
 reel_weights = [0,0,0,0,0]
 for symbol in symbols_weights.keys():
@@ -77,4 +74,3 @@ for payout in payouts:
         expected_value += expectedValueOfPermutation([0,1,1,0,1], symbols_weights[payout['symbol']], reel_weights, payout['value'])
 
 print "expected value: {0}".format(expected_value)
-#print "5 choose 3: {0}".format(binomialCoefficient(5,3))
