@@ -1,6 +1,6 @@
-#get the symbols and weights on each reel
 import math
 
+#get the symbols and weights on each reel
 symbols = []
 symbols_weights = {}
 symbols_weights_file = open('symbols_weights.csv', 'r')
@@ -44,7 +44,7 @@ def valueOfPermutation(permutation, weights, reel_weights):
     return value
 
 def expectedValueOfPermutation(permutation, weights, reel_weights, value):
-    probability = valueOfPermutation([0,1,1,1,1], weights, reel_weights) / reduce(multiply, reel_weights)
+    probability = valueOfPermutation(permutation, weights, reel_weights) / reduce(multiply, reel_weights)
     return probability * value
 
 def binomialCoefficient(n,k):
