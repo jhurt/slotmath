@@ -1,0 +1,15 @@
+These scripts can be used to calculate payouts for 5 reel single and multiline slot machines.
+
+reelmath calculates the expected value using the probability of each payout and multiplying it by the payout amount.
+bruteforcereelmath does the same thing but in a brute force manner, mostly as a test for the correctness of reelmath
+multilinebruteforcemath calculates the expected value for all lines, in this case 3 lines. It can be extended to any number of lines.
+
+One interesting thing is that the sum of the conditional probabilities of betting X lines works out to be the same as betting only one line after dividing by X, so multilinebruteforcemath is really only used to verify the expected value that reelmath produces.
+In other words, you can use reelmath for single and multiline payout calculations.
+
+reel_layout.csv contains a list of symbols and their weight for each reel, change this as you wish for different slot configurations.
+payouts.csv contains a list of symbol combinations and their respective payouts, which you can also alter.
+Together, these files can be used to verify your expected payout. In Las Vegas, the minimum payouts for slots are .75, but to really make the game fun for players you should keep it in the .9 - 1.0 range.
+You can also add in bonus games to improve the payout.
+
+I recommend using pypy when running any of the bruteforce scripts. On my machine I was seeing a 6x-7x speedup from this.
