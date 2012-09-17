@@ -14,4 +14,4 @@ You can also add in bonus games to improve the payout.
 
 I recommend using pypy (http://pypy.org/) when running any of the bruteforce scripts. On my machine I was seeing a 6x-7x speedup from this.
 
-This software isOpen Source under the BSD license, see LICENSE.txt for details.
+This software is Open Source under the BSD license, see LICENSE.txt for details.
