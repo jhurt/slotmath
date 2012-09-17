@@ -26,19 +26,6 @@ while line:
     line = payouts_file.readline()
 payouts_file.close()
 
-def valueOfPermutation(permutation, weights, reel_weights):
-    value = 1
-    for i in range(len(permutation)):
-        if permutation[i] == 0:
-            value = value * (reel_weights[i] - weights[i])
-        elif permutation[i] == 1:
-            value = value * weights[i]
-    return value
-
-def expectedValueOfPermutation(permutation, weights, reel_weights, value):
-    probability = valueOfPermutation([0,1,1,1,1], weights, reel_weights) / reduce(lambda x,y: x*y, reel_weights)
-    return probability * value
-
 #calculate the total symbol weight for each reel
 reel_weights = [0,0,0,0,0]
 

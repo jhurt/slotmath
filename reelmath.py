@@ -1,6 +1,6 @@
-#get the symbols and weights on each reel
 import itertools
 
+#get the symbols and weights on each reel
 symbols_weights = {}
 symbols_weights_file = open('reels_layout.csv', 'r')
 line = symbols_weights_file.readline()
