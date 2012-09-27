@@ -2,7 +2,7 @@ import itertools
 
 #get the symbols and weights on each reel
 symbols_weights = {}
-symbols_weights_file = open('reels_layout.csv', 'r')
+symbols_weights_file = open('reels_weights.csv', 'r')
 line = symbols_weights_file.readline()
 while line:
     tokens = line.split(',')

@@ -1,6 +1,6 @@
 #get the symbols and weights on each reel
 symbols_weights = []
-slot_layout_file = open('reels_layout.csv', 'r')
+slot_layout_file = open('reels_weights.csv', 'r')
 line = slot_layout_file.readline()
 while line:
     tokens = line.split(',')
