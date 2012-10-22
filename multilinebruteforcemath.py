@@ -46,6 +46,12 @@ possible_lines = []
 possible_lines.append([0,0,0,0,0])
 possible_lines.append([-1,-1,-1,-1,-1])
 possible_lines.append([1,1,1,1,1])
+possible_lines.append([-1,0,1,0,-1])
+possible_lines.append([1,0,-1,0,1])
+possible_lines.append([0,-1,-1,-1,0])
+possible_lines.append([0,1,1,1,0])
+possible_lines.append([-1,-1,0,1,1])
+possible_lines.append([1,1,0,-1,-1])
 
 #find the expected value
 total_choices = reduce(lambda x,y: x*y, reel_weights)
