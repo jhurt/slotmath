@@ -1,14 +1,18 @@
 #get the symbols and weights on each reel
 symbols_weights = []
-slot_layout_file = open('reels_weights.csv', 'r')
+slot_layout_file = open('reels_weights_shuffled.csv', 'r')
 line = slot_layout_file.readline()
 while line:
     tokens = line.split(',')
-    if len(tokens) != 6 or len(tokens[0]) < 1:
+    if len(tokens) < 6:
         break
     symbol_weights = []
-    for weight in tokens[1:]:
-        symbol_weights.append({'symbol':tokens[0], 'weight':float(weight)})
+    for symbol_weight in tokens:
+        strs = symbol_weight.split("_")
+        if len(strs) == 2:
+            symbol = strs[0]
+            weight = float(strs[1])
+            symbol_weights.append({'symbol':symbol, 'weight':weight})
     symbols_weights.append(symbol_weights)
     line = slot_layout_file.readline()
 slot_layout_file.close()
@@ -91,7 +95,7 @@ for a in range(symbols_per_reel[0]):
                             if symbol in symbol_to_count.keys():
                                 for payout in symbol_to_payouts[symbol]:
                                     if payout['frequency'] == symbol_to_count[symbol]:
-                                        probability = reduce(lambda x,y: x*y, map(lambda x: x['weight'], line)) / total_choices
+                                        probability = reduce(lambda x,y: x*y, map(lambda x: x['weight'], lines[0])) / total_choices
                                         expected_value += payout['value'] * probability
 
 print "expected value: {0}".format(expected_value/len(possible_lines))
