@@ -4,7 +4,7 @@ slot_layout_file = open('reels_weights_shuffled.csv', 'r')
 line = slot_layout_file.readline()
 while line:
     tokens = line.split(',')
-    if len(tokens) < 6:
+    if len(tokens) < 5:
         break
     symbol_weights = []
     for symbol_weight in tokens:
@@ -37,9 +37,9 @@ symbols_per_reel = [len(symbols_weights), len(symbols_weights), len(symbols_weig
 for symbol_weights in symbols_weights:
     reel_weights = map(lambda x,y:x+y, reel_weights, map(lambda x: x['weight'], symbol_weights))
 
-def makeSymbolToCount(reel):
+def makeSymbolToCount(line):
     symbol_to_count = {}
-    for symbol_weights in reel:
+    for symbol_weights in line:
         if symbol_weights['symbol'] in symbol_to_count.keys():
             symbol_to_count[symbol_weights['symbol']] += 1
         else:

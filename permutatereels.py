@@ -41,6 +41,7 @@ reels_weights_shuffled_file = open("reels_weights_shuffled.csv", "w")
 for sw in shuffled_symbols_weights:
     for symbol_weight in sw:
         reels_weights_shuffled_file.write("{0}_{1},".format(symbol_weight["symbol"], symbol_weight["weight"]))
+    reels_weights_shuffled_file.seek(-1,2)
     reels_weights_shuffled_file.write("\n")
 reels_weights_shuffled_file.flush()
 reels_weights_shuffled_file.close()
