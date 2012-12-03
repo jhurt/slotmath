@@ -11,13 +11,13 @@
 
 typedef struct {
    char symbol;
-   float weight;
+   double weight;
 } symbol_weight_t;
 
 typedef struct {
     char symbol;
     int frequency;
-    float value;
+    double value;
 } payout_t;
 
 typedef struct {
@@ -67,10 +67,14 @@ __device__ int isWin(payout_t payout, symbol_weight_t *line) {
 }
 
 __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int num_payouts, const int total_choices,
-									   int *device_possible_lines, symbol_weight_t *device_symbols_weights, payout_t *device_payouts, float *device_expected_values) {
+									   int *device_possible_lines, symbol_weight_t *device_symbols_weights, payout_t *device_payouts, double *device_expected_values) {
     int a_index = threadIdx.x;
     if (a_index < num_symbols_per_reel) {
-		float expected_value = 0.0;
+       int i;
+       for(i=0;i < NUM_LINES; i++) {
+           int index = (a_index * NUM_LINES) + i;
+	   device_expected_values[index] = 0.0;
+       }
 		int b,c,d,e;
 		int ai,bi,ci,di,ei;
 		for (b = 0; b < num_symbols_per_reel; b++) {
@@ -78,7 +82,6 @@ __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int
 				for (d = 0; d < num_symbols_per_reel; d++) {
 					for (e = 0; e < num_symbols_per_reel; e++) {
 						symbol_weight_t lines[NUM_LINES][NUM_REELS];
-						int i = 0;
 						for(i = 0; i < NUM_LINES; i++) {
 							int possible_line[NUM_REELS];
 							int j = 0;
@@ -132,12 +135,16 @@ __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int
 							for(j = 0; j < num_payouts; j++) {
 								if(isWin(device_payouts[j], lines[i])) {
 									int k = 0;
-									float probability = 1.0;
+									double probability = 1.0;
 									for(k = 0; k < NUM_REELS; k++) {
-										probability *= lines[0][k].weight;
+									    probability *= lines[0][k].weight;
 									}
 									probability /= total_choices;
-									expected_value += device_payouts[j].value * probability; 
+                                    					double expected_value = device_payouts[j].value * probability;
+                                    					for(k=i; k < NUM_LINES; k++) {
+									    int index = (a_index * NUM_LINES) + k;
+									    device_expected_values[index] += expected_value;
+									}
 								}
 							}
 						}
@@ -145,7 +152,6 @@ __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int
 				}
 			}
 		}
-		device_expected_values[a_index] = expected_value;
     }
 }
 
@@ -184,7 +190,7 @@ int main(void) {
             char **strs = str_split(tokens[i], "_", &num_strs);
             if(num_strs == 2) {
                 char symbol = strs[0][0];
-                float weight = strtof(strs[1], NULL);
+                double weight = strtod(strs[1], NULL);
                 symbol_weight_t symbol_weight = {symbol, weight};
                 symbols_weights[index * NUM_REELS + i] = symbol_weight;
             }
@@ -213,7 +219,7 @@ int main(void) {
         char **tokens = str_split(line, ",", &num_tokens);
         char symbol = tokens[0][0];
         int frequency = atoi(tokens[1]);
-        float value = strtof(tokens[2], NULL);
+        double value = strtod(tokens[2], NULL);
         payout_t payout = {symbol, frequency, value};
         payouts[payout_index] = payout;
         payout_index += 1;
@@ -229,7 +235,7 @@ int main(void) {
     for(i = 0; i < num_symbols_per_reel; i++) {
         int j = 0;
         for(j = 0; j < NUM_REELS; j++) {
-        	symbol_weight_t symbol_weight = symbols_weights[i*NUM_REELS + j];
+            symbol_weight_t symbol_weight = symbols_weights[i*NUM_REELS + j];
             reel_weights[j] += symbol_weight.weight;
         }
     }
@@ -246,13 +252,14 @@ int main(void) {
                                  -1,-1,0,1,1,
                                  1,1,0,-1,-1};
 
-    printf("**Finding expected value\n");
+    printf("**Finding total choices\n");
     int total_choices = 1;
     for(i = 0; i < NUM_REELS; i++) {
         total_choices *= reel_weights[i];
     }
 
     //copy host possible lines to device possible lines
+    printf("**Copying host possible lines to device possible lines\n");
     int *device_possible_lines = NULL;
     size_t size = sizeof(int) * NUM_LINES * NUM_REELS;
     cudaError_t error = cudaMalloc((void **)&device_possible_lines, size);
@@ -267,6 +274,7 @@ int main(void) {
     }
 
     //copy host symbols weights to device symbols weights
+    printf("**Copying host symbols weights to device symbols weights\n");
     symbol_weight_t *device_symbols_weights = NULL;
     size = num_symbols_per_reel * NUM_REELS * sizeof(symbol_weight_t);
     error = cudaMalloc((void **)&device_symbols_weights, size);
@@ -281,6 +289,7 @@ int main(void) {
     }
 
     //copy host payouts to device payouts
+    printf("**Copying host payouts to device payouts\n");
     payout_t *device_payouts = NULL;
     size = num_payouts * sizeof(payout_t);
     error = cudaMalloc((void**)&device_payouts, size);
@@ -295,9 +304,11 @@ int main(void) {
     }
 
     //initialize expected value array, this will hold the expected value calculated by each thread
-    size = num_symbols_per_reel * sizeof(float);
-    float *expected_values = (float*) malloc(size);
-    float *device_expected_values = NULL;
+    printf("**allocing host expected values\n");   
+    size = num_symbols_per_reel * sizeof(double) * NUM_LINES;
+    double *expected_values = (double*) malloc(size);
+    printf("**allocing device expected values\n");
+    double *device_expected_values = NULL;
     error = cudaMalloc((void**)&device_expected_values, size);
     if (error != cudaSuccess) {
        	printf("cudaMalloc device_expected_values returned error code %d, line(%d)\n", error, __LINE__);
@@ -306,8 +317,8 @@ int main(void) {
 
     //invoke the device code
     int threadsPerBlock = num_symbols_per_reel;
+    printf("**Calculating expected value on %d device threads\n", threadsPerBlock);    
     int blocksPerGrid = 1;//(numElements + threadsPerBlock - 1) / threadsPerBlock;
-    printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
     calculateExpectedValue<<<blocksPerGrid, threadsPerBlock>>>(num_symbols_per_reel, num_payouts, total_choices,
     		device_possible_lines, device_symbols_weights, device_payouts, device_expected_values);
     error = cudaGetLastError();
@@ -315,21 +326,28 @@ int main(void) {
     	fprintf(stderr, "Failed to launch calculateExpectedValue kernel (error code %s)!\n", cudaGetErrorString(error));
     	exit(EXIT_FAILURE);
     }
+    cudaThreadSynchronize();
 
     //copy expected values from CUDA device to host memory
+    printf("**Copying device expected values to host expected values\n");
     error = cudaMemcpy(expected_values, device_expected_values, size, cudaMemcpyDeviceToHost);
     if (error != cudaSuccess){
-    	fprintf(stderr, "Failed to copy vector expected values from device to host (error code %s)!\n", cudaGetErrorString(error));
-    	exit(EXIT_FAILURE);
+        fprintf(stderr, "Failed to copy vector expected values %d from device to host (error code %s)!\n", i, cudaGetErrorString(error));
+        exit(EXIT_FAILURE);
     }
-
+ 
     //sum each of the device expected values into one sum
-    float expected_value = 0.0;
-    for(i = 0; i < num_symbols_per_reel; i++) {
-    	expected_value += expected_values[i];
+    printf("**Summing all expected values\n");
+    int j;
+    for (i=0; i < NUM_LINES; i++) {
+        double expected_value = 0.0;
+        for(j = 0; j < num_symbols_per_reel; j++) {
+	    int index = j * NUM_LINES + i;
+            expected_value += expected_values[index];
+        }
+        printf("expected value for line %d: %f\n", i+1, expected_value/(i+1));
     }
-    printf("expected value %f\n", expected_value/NUM_LINES);
-
+        
     //free host and device memory
     free(symbols_weights);
     free(payouts);

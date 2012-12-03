@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define NUM_REELS 5
+#define NUM_LINES 5
 
 typedef struct {
    char *symbol;
@@ -173,8 +174,8 @@ int main(void) {
             for (c = 0; c < num_symbols_per_reel; c++) {
                 for (d = 0; d < num_symbols_per_reel; d++) {
                     for (e = 0; e < num_symbols_per_reel; e++) {
-                        symbol_weight_t lines[9][NUM_REELS];
-                        for(i = 0; i < 9; i++) {
+                        symbol_weight_t lines[NUM_LINES][NUM_REELS];
+                        for(i = 0; i < NUM_LINES; i++) {
                             int possible_line[NUM_REELS];
                             int j = 0;
                             for(j = 0; j < NUM_REELS; j++) {
@@ -222,7 +223,7 @@ int main(void) {
                             lines[i][3] = symbols_weights[di][3];
                             lines[i][4] = symbols_weights[ei][4];                            
                         }
-                        for(i = 0; i < 9; i++) {
+                        for(i = 0; i < NUM_LINES; i++) {
                             int j = 0;
                             for(j = 0; j < payout_index; j++) {
                                 if(isWin(payouts[j], lines[i])) {
@@ -241,7 +242,7 @@ int main(void) {
             }
         }
     }
-    printf("expected value %f\n", expected_value/9);
+    printf("expected value %f\n", expected_value/NUM_LINES);
 
     return 0;
 }
