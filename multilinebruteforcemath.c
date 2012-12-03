@@ -25,14 +25,12 @@ char** str_split(char* str, const char* delimiterStr, size_t *count) {
     const char delimiter = delimiterStr[0];
     char** result = NULL;
     *count = 0;
-    char* last_delimiter = NULL;
 
     /* Count how many elements will be extracted. */
     char* tmp = str;
     while (*tmp) {
         if (delimiter == *tmp) {
             *count += 1;
-            last_delimiter = tmp;
         }
         tmp++;
     }
@@ -142,10 +140,6 @@ int main(void) {
     int i = 0;
     for(i = 0; i < NUM_REELS; i++) {
         reel_weights[i] = 0;
-    }
-    int symbols_per_reel[NUM_REELS];
-    for(i = 0; i < NUM_REELS; i++) {
-        symbols_per_reel[i] = num_symbols_per_reel;
     }
     for(i = 0; i < num_symbols_per_reel; i++) {
         symbol_weight_t *symbol_weights = symbols_weights[i];
