@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 // For the CUDA runtime routines (prefixed with "cuda_")
 #include <cuda_runtime.h>
@@ -69,91 +70,91 @@ __device__ int isWin(payout_t payout, symbol_weight_t *line) {
 __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int num_payouts, const int total_choices,
 									   int *device_possible_lines, symbol_weight_t *device_symbols_weights, payout_t *device_payouts, double *device_expected_values, int *device_payout_frequencies) {
     int a_index = threadIdx.x;
-    if (a_index < num_symbols_per_reel) {
-       device_payout_frequencies[a_index] = 0;
+    int b_index = blockIdx.x;
+    if (a_index < num_symbols_per_reel && b_index < num_symbols_per_reel) {
+       int device_index = a_index * num_symbols_per_reel + b_index;
+       device_payout_frequencies[device_index] = 0;
        int i;
        for(i=0;i < NUM_LINES; i++) {
-           int index = (a_index * NUM_LINES) + i;
+           int index = (device_index * NUM_LINES) + i;
 	   device_expected_values[index] = 0.0;
        }
-		int b,c,d,e;
-		int ai,bi,ci,di,ei;
-		for (b = 0; b < num_symbols_per_reel; b++) {
-			for (c = 0; c < num_symbols_per_reel; c++) {
-				for (d = 0; d < num_symbols_per_reel; d++) {
-					for (e = 0; e < num_symbols_per_reel; e++) {
-						symbol_weight_t lines[NUM_LINES][NUM_REELS];
-						for(i = 0; i < NUM_LINES; i++) {
-							int possible_line[NUM_REELS];
-							int j = 0;
-							for(j = 0; j < NUM_REELS; j++) {
-								possible_line[j] = device_possible_lines[i*NUM_REELS + j];
-							}
-
-							ai = a_index + possible_line[0];
-							if (ai == num_symbols_per_reel) {
-								ai = 0;
-							}
-							if (ai < 0) {
-								ai = num_symbols_per_reel-1;
-							}
-							bi = b + possible_line[1];
-							if (bi == num_symbols_per_reel) {
-								bi = 0;
-							}
-							if (bi < 0) {
-								bi = num_symbols_per_reel-1;
-							}
-							ci = c + possible_line[2];
-							if (ci == num_symbols_per_reel) {
-								ci = 0;
-							}
-							if (ci < 0) {
-								ci = num_symbols_per_reel-1;
-							}
-							di = d + possible_line[3];
-							if (di == num_symbols_per_reel) {
-								di = 0;
-							}
-							if (di < 0) {
-								di = num_symbols_per_reel-1;
-							}
-							ei = e + possible_line[4];
-							if (ei == num_symbols_per_reel) {
-								ei = 0;
-							}
-							if (ei < 0) {
-								ei = num_symbols_per_reel-1;
-							}
-							lines[i][0] = device_symbols_weights[ai*NUM_REELS];
-							lines[i][1] = device_symbols_weights[bi*NUM_REELS + 1];
-							lines[i][2] = device_symbols_weights[ci*NUM_REELS + 2];
-							lines[i][3] = device_symbols_weights[di*NUM_REELS + 3];
-							lines[i][4] = device_symbols_weights[ei*NUM_REELS + 4];
-						}
-						for(i = 0; i < NUM_LINES; i++) {
-							int j = 0;
-							for(j = 0; j < num_payouts; j++) {
-								if(isWin(device_payouts[j], lines[i])) {
- 									device_payout_frequencies[a_index] += 1;
-									int k = 0;
-									double probability = 1.0;
-									for(k = 0; k < NUM_REELS; k++) {
-									    probability *= lines[0][k].weight;
-									}
-									probability /= total_choices;
-                                    					double expected_value = device_payouts[j].value * probability;
-                                    					for(k=i; k < NUM_LINES; k++) {
-									    int index = (a_index * NUM_LINES) + k;
-									    device_expected_values[index] += expected_value;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+       int c,d,e;
+       int ai,bi,ci,di,ei;
+       for (c = 0; c < num_symbols_per_reel; c++) {
+           for (d = 0; d < num_symbols_per_reel; d++) {
+	       for (e = 0; e < num_symbols_per_reel; e++) {
+	           symbol_weight_t lines[NUM_LINES][NUM_REELS];
+		   for(i = 0; i < NUM_LINES; i++) {
+		       int possible_line[NUM_REELS];
+		       int j = 0;
+		       for(j = 0; j < NUM_REELS; j++) {
+		           possible_line[j] = device_possible_lines[i*NUM_REELS + j];
+		       }
+		       ai = a_index + possible_line[0];
+		       if (ai == num_symbols_per_reel) {
+		           ai = 0;
+		       }
+		       if (ai < 0) {
+		       	   ai = num_symbols_per_reel-1;
+		       }
+		       bi = b_index + possible_line[1];
+		       if (bi == num_symbols_per_reel) {
+		           bi = 0;
+		       }
+		       if (bi < 0) {
+		           bi = num_symbols_per_reel-1;
+		       }
+		       ci = c + possible_line[2];
+		       if (ci == num_symbols_per_reel) {
+		           ci = 0;
+		       }
+		       if (ci < 0) {
+		           ci = num_symbols_per_reel-1;
+		       }
+		       di = d + possible_line[3];
+		       if (di == num_symbols_per_reel) {
+		           di = 0;
+		       }
+		       if (di < 0) {
+		           di = num_symbols_per_reel-1;
+		       }
+		       ei = e + possible_line[4];
+		       if (ei == num_symbols_per_reel) {
+		       	   ei = 0;
+		       }
+		       if (ei < 0) {
+		           ei = num_symbols_per_reel-1;
+		       }
+		       lines[i][0] = device_symbols_weights[ai*NUM_REELS];
+		       lines[i][1] = device_symbols_weights[bi*NUM_REELS + 1];
+		       lines[i][2] = device_symbols_weights[ci*NUM_REELS + 2];
+		       lines[i][3] = device_symbols_weights[di*NUM_REELS + 3];
+		       lines[i][4] = device_symbols_weights[ei*NUM_REELS + 4];
 		}
+		
+		for(i = 0; i < NUM_LINES; i++) {
+		      int j = 0;
+		      for(j = 0; j < num_payouts; j++) {
+		      	    if(isWin(device_payouts[j], lines[i])) {
+			    	device_payout_frequencies[device_index] += 1;
+				int k = 0;
+				double probability = 1.0;
+				for(k = 0; k < NUM_REELS; k++) {
+				    probability *= lines[0][k].weight;
+				}
+				probability /= total_choices;
+                                double expected_value = device_payouts[j].value * probability;
+                                for(k=i; k < NUM_LINES; k++) {
+				    int index = (device_index * NUM_LINES) + k;
+				    device_expected_values[index] += expected_value;
+				}
+			    }
+			}
+		    }					
+  	        }
+	    }
+        }
     }
 }
 
@@ -260,11 +261,23 @@ int main(void) {
         total_choices *= reel_weights[i];
     }
 
+    int device_id = 0;
+    cudaDeviceProp device_properties;
+    cudaError_t error = cudaGetDeviceProperties(&device_properties, device_id);
+    if (error != cudaSuccess) {
+        printf("cudaGetDeviceProperties returned error code %d, line(%d)\n", error, __LINE__);
+    }
+    else {
+        printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n", device_id, device_properties.name, device_properties.major, device_properties.minor);
+    }
+
+    double num_symbols_per_reel_sq = pow(num_symbols_per_reel, 2.0);
+
     //copy host possible lines to device possible lines
     printf("**Copying host possible lines to device possible lines\n");
     int *device_possible_lines = NULL;
     size_t size = sizeof(int) * NUM_LINES * NUM_REELS;
-    cudaError_t error = cudaMalloc((void **)&device_possible_lines, size);
+    error = cudaMalloc((void **)&device_possible_lines, size);
     if (error != cudaSuccess) {
     	printf("cudaMalloc device_possible_lines returned error code %d, line(%d)\n", error, __LINE__);
         exit(EXIT_FAILURE);
@@ -307,7 +320,7 @@ int main(void) {
 
     //initialize expected value array, this will hold the expected value calculated by each thread
     printf("**allocing host expected values\n");   
-    size = num_symbols_per_reel * sizeof(double) * NUM_LINES;
+    size = num_symbols_per_reel_sq * sizeof(double) * NUM_LINES;
     double *expected_values = (double*) malloc(size);
     printf("**allocing device expected values\n");
     double *device_expected_values = NULL;
@@ -319,10 +332,10 @@ int main(void) {
 
     //initialize device payout frequencies array
     printf("**allocing host payout frequencies\n");
-    int *payout_frequencies = (int*) malloc(num_symbols_per_reel * sizeof(int));
+    int *payout_frequencies = (int*) malloc(num_symbols_per_reel_sq * sizeof(int));
     printf("**allocing device payout frequencies\n");
     int *device_payout_frequencies = NULL;
-    error = cudaMalloc((void**)&device_payout_frequencies, num_symbols_per_reel * sizeof(int));
+    error = cudaMalloc((void**)&device_payout_frequencies, num_symbols_per_reel_sq * sizeof(int));
     if (error != cudaSuccess) {
         printf("cudaMalloc device_payout_frequencies returned error code %d, line(%d)\n", error, __LINE__);
         exit(EXIT_FAILURE);
@@ -331,7 +344,7 @@ int main(void) {
     //invoke the device code
     int threadsPerBlock = num_symbols_per_reel;
     printf("**Calculating expected value on %d device threads\n", threadsPerBlock);    
-    int blocksPerGrid = 1;//(numElements + threadsPerBlock - 1) / threadsPerBlock;
+    int blocksPerGrid = num_symbols_per_reel;
     calculateExpectedValue<<<blocksPerGrid, threadsPerBlock>>>(num_symbols_per_reel, num_payouts, total_choices,
     		device_possible_lines, device_symbols_weights, device_payouts, device_expected_values, device_payout_frequencies);
     error = cudaGetLastError();
@@ -339,6 +352,8 @@ int main(void) {
     	fprintf(stderr, "Failed to launch calculateExpectedValue kernel (error code %s)!\n", cudaGetErrorString(error));
     	exit(EXIT_FAILURE);
     }
+
+    //wait for all threads to finish
     cudaThreadSynchronize();
 
     //copy expected values from CUDA device to host memory
@@ -354,7 +369,7 @@ int main(void) {
     int j;
     for (i=0; i < NUM_LINES; i++) {
         double expected_value = 0.0;
-        for(j = 0; j < num_symbols_per_reel; j++) {
+        for(j = 0; j < num_symbols_per_reel_sq; j++) {
 	    int index = j * NUM_LINES + i;
             expected_value += expected_values[index];
         }
@@ -362,7 +377,7 @@ int main(void) {
     }
 
     //copy device payout frequencies to host payout frequencies
-    error = cudaMemcpy(payout_frequencies, device_payout_frequencies, num_symbols_per_reel * sizeof(int), cudaMemcpyDeviceToHost);
+    error = cudaMemcpy(payout_frequencies, device_payout_frequencies, num_symbols_per_reel_sq * sizeof(int), cudaMemcpyDeviceToHost);
     if (error != cudaSuccess){
         fprintf(stderr, "Failed to copy payout frequencies %d from device to host (error code %s)!\n", i, cudaGetErrorString(error));
         exit(EXIT_FAILURE);
@@ -370,11 +385,11 @@ int main(void) {
     
     //sum each device payout frequency into one frequency
     int payout_frequency = 0;
-    for(i=0; i < num_symbols_per_reel; i++) {
+    for(i=0; i < num_symbols_per_reel_sq; i++) {
         payout_frequency += payout_frequencies[i];
     }
     double p = payout_frequency / (1.0 * total_choices);
-    printf("payout frequency: %d. total spins: %d. percentage %f\n", payout_frequency, total_choices, p);
+    printf("payout spins: %d. total spins: %d. payout frequency: %f\n", payout_frequency, total_choices, p);
         
     //free host and device memory
     free(symbols_weights);
