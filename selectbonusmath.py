@@ -1,4 +1,3 @@
-payouts_probabilities = []
 payouts_probabilities_file = open('select_bonus.csv', 'r')
 line = payouts_probabilities_file.readline()
 expected_value = 0.0
