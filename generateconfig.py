@@ -128,7 +128,7 @@ def writeConfigFile(reels, weights):
 def callBinaryAndGetOutput():
     #call the binary that calculates the expected values of each line
     line_re = re.compile(r'EV line (\d+): ([0-9]*\.?[0-9]+).*')
-    output = Popen(['./a.out'], stdout=PIPE).communicate()[0]
+    output = Popen(['./multilinebruteforcemath'], stdout=PIPE).communicate()[0]
     output_lines = output.split('\n')
     expected_values = []
     for output_line in output_lines:
@@ -159,6 +159,7 @@ def checkAllLinesDelta():
 def checkExpectedPayouts(reels, weights):
     expected_values = callBinaryAndGetOutput()
 
+    #randomly select a symbol in the set of paying_symbols
     def getSymbolIndices(reels, paying_symbols):
         while True:
             i = random.randint(0, len(reels[0])-1)
