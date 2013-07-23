@@ -4,12 +4,14 @@ from subprocess import Popen, PIPE
 import re
 
 #get the upper and lower bound from the command line
+import subprocess
+
 parser = OptionParser()
-parser.add_option('--lower_bound', dest='lower_bound', help='lower bound payout percentage',)
-parser.add_option('--upper_bound', dest='upper_bound', help='lower bound payout percentage')
+parser.add_option('--lower_bound', dest='lower_bound', help='lower bound payout percentage as a float',)
+parser.add_option('--upper_bound', dest='upper_bound', help='lower bound payout percentage as a float')
 parser.add_option('--weight', dest='total_reel_weight', help='total weight of each reel')
 parser.add_option('--reels', dest='reels', help='total number of reel strips')
-parser.add_option('--highsymbols', dest='high_symbols', help='high payout symbols')
+parser.add_option('--highsymbols', dest='high_symbols', help='comma delimited list of high payout symbols')
 
 (options, args) = parser.parse_args()
 
@@ -128,13 +130,20 @@ def writeConfigFile(reels, weights):
 def callBinaryAndGetOutput():
     #call the binary that calculates the expected values of each line
     line_re = re.compile(r'EV line (\d+): ([0-9]*\.?[0-9]+).*')
+    #binary_process = subprocess.Popen(['./multilinebruteforcemath'], stdout=PIPE)
+    #output = binary_process.communicate()[0]
+    #print output
+    #binary_process.wait()
+
     output = Popen(['./multilinebruteforcemath'], stdout=PIPE).communicate()[0]
     output_lines = output.split('\n')
+
     expected_values = []
     for output_line in output_lines:
         match = line_re.search(output_line)
         if match:
             expected_values.append(float(match.group(2)))
+    print '{0} expected value lines'.format(len(expected_values))
     return expected_values
 
 def checkAllLinesDelta():

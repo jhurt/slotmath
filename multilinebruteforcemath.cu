@@ -162,14 +162,14 @@ int main(void) {
     
     //get the symbols and weights on each reel
     printf("**Reading symbols and weights file\n");
-    FILE *reels_weights_file = fopen("reels_weights_shuffled.csv", "rb");
-    if (reels_weights_file == NULL) {
+    FILE *symbols_weights_file = fopen("symbols_weights.csv", "rb");
+    if (symbols_weights_file == NULL) {
         printf("cannot open reels/weights file\n");
         return 1;
     }
     char line [512];
     int num_symbols_per_reel = 0;
-    while (fgets(line, 512, reels_weights_file) != NULL) {
+    while (fgets(line, 512, symbols_weights_file) != NULL) {
         size_t num_tokens = 0;
         char **tokens = str_split(line, ",", &num_tokens);
         if (num_tokens != NUM_REELS) {
@@ -179,9 +179,9 @@ int main(void) {
     }
 
     symbol_weight_t *symbols_weights = (symbol_weight_t*) malloc(sizeof(symbol_weight_t) * num_symbols_per_reel * NUM_REELS);
-    rewind(reels_weights_file);
+    rewind(symbols_weights_file);
     int index = 0;
-    while (fgets(line, 512, reels_weights_file) != NULL) {
+    while (fgets(line, 512, symbols_weights_file) != NULL) {
         size_t num_tokens = 0;
         char **tokens = str_split(line, ",", &num_tokens);
         if (num_tokens != NUM_REELS) {
@@ -200,7 +200,7 @@ int main(void) {
         }
         index += 1;
     }
-    fclose (reels_weights_file);
+    fclose (symbols_weights_file);
 
     //get the payouts
     printf("**Reading payouts file\n");
@@ -373,7 +373,7 @@ int main(void) {
 	    int index = j * NUM_LINES + i;
             expected_value += expected_values[index];
         }
-        printf("expected value for line %d: %f\n", i+1, expected_value/(i+1));
+        printf("EV line %d: %f\n", i+1, expected_value/(i+1));
     }
 
     //copy device payout frequencies to host payout frequencies
