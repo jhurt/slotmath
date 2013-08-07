@@ -52,6 +52,8 @@ char** str_split(char* str, const char* delimiterStr, size_t *count) {
     }
     return result;
 }
+
+//counts a line as a win with the symbols any order
 __device__ int isWin(payout_t payout, symbol_weight_t *line) {
     int payout_symbol_count = 0;
     int index = 0;
@@ -66,6 +68,30 @@ __device__ int isWin(payout_t payout, symbol_weight_t *line) {
     }
     return 0;
 }
+
+//counts a line as a win only if the in order symbols are consecutive
+__device__ int isWinConsecutive(payout_t payout, symbol_weight_t *line) {
+    int consecutive_payout_symbol_count = 0;
+    int index = 0;
+    int current_consecutive_count = 0;
+    for (index = 0; index < NUM_REELS; index++) {
+        symbol_weight_t symbol_weight = line[index];
+        if(symbol_weight.symbol == payout.symbol) {
+            current_consecutive_count += 1;
+            if(current_consecutive_count > consecutive_payout_symbol_count) {
+                consecutive_payout_symbol_count = current_consecutive_count;
+            }
+        }
+        else {
+            current_consecutive_count = 0;
+        }
+    }
+    if (consecutive_payout_symbol_count == payout.frequency) {
+        return 1;
+    }
+    return 0;
+}
+
 
 __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int num_payouts, const int total_choices,
 									   int *device_possible_lines, symbol_weight_t *device_symbols_weights, payout_t *device_payouts, double *device_expected_values, int *device_payout_frequencies) {
@@ -136,7 +162,7 @@ __global__ void calculateExpectedValue(const int num_symbols_per_reel, const int
                 for(i = 0; i < NUM_LINES; i++) {
                     int j = 0;
                     for(j = 0; j < num_payouts; j++) {
-                        if(isWin(device_payouts[j], lines[i])) {
+                        if(isWinConsecutive(device_payouts[j], lines[i])) {
                             device_payout_frequencies[device_index] += 1;
                             int k = 0;
                             double probability = 1.0;
@@ -240,6 +266,9 @@ int main(void) {
             symbol_weight_t symbol_weight = symbols_weights[i*NUM_REELS + j];
             reel_weights[j] += symbol_weight.weight;
         }
+    }
+    for(i = 0; i < NUM_REELS; i++) {
+        printf("**Reel #%d, weight: %d\n", i, reel_weights[i]);
     }
 
     printf("**Initializing lines\n");
